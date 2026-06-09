@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>My Bank — Digital Wallet Onboarding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1a3314;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 48px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.07),
+        0 40px 100px rgba(0,0,0,0.65),
+        inset 0 0 0 1px rgba(0,0,0,0.2);
+    }
+    @media (max-height: 940px) { .phone { transform: scale(0.93); transform-origin: center; } }
+    @media (max-height: 860px) { .phone { transform: scale(0.84); transform-origin: center; } }
+    @media (max-height: 780px) { .phone { transform: scale(0.75); transform-origin: center; } }
+    @media (max-height: 700px) { .phone { transform: scale(0.66); transform-origin: center; } }
+    @keyframes sIn  { from { opacity:0; transform:translateX(32px); }  to { opacity:1; transform:none; } }
+    @keyframes sBk  { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:none; } }
+    @keyframes fIn  { from { opacity:0; transform:scale(0.97); }       to { opacity:1; transform:none; } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes popIn{ from { opacity:0; transform:scale(0.8); }        to { opacity:1; transform:none; } }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <div id="root" style="position:absolute;inset:0;"></div>
+</div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+
+
+/* ── Design Tokens ────────────────────────────────────────── */
+const T = {
+  cr: '#fafcf9', wh: '#ffffff',
+  m50: '#f2f7f0', m100: '#ddebd8', m200: '#b8d4af',
+  m400: '#6fa05e', m600: '#4a7a38', m800: '#2d5422', m900: '#1a3314',
+  e50: '#eaf7f1', e100: '#c0ebd7', e200: '#80d5af',
+  e400: '#2db37a', e600: '#1a8a5a', e800: '#0e5c3a',
+  txt: '#1a2e1a', ts: '#4a6347', tm: '#7a9a78',
+  bl: 'rgba(74,122,56,0.12)', bm: 'rgba(74,122,56,0.22)'
+};
+const sr = 'Georgia,"Times New Roman",serif';
+const ss = "'DM Sans',system-ui,sans-serif";
+const sh = 'Helvetica Neue,Helvetica,Arial,sans-serif';
+const LF = 'brightness(0) saturate(100%) invert(22%) sepia(28%) saturate(700%) hue-rotate(75deg) brightness(85%)';
+const LFW = 'brightness(0) invert(1)';
+
+/* ── StatusBar ────────────────────────────────────────────── */
+function StatusBar({ light }) {
+  const c = light ? '#fff' : T.txt;
+  return (
+    <div style={{ height: 44, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 28px 8px', zIndex: 50, position: 'relative' }}>
+      <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px', color: c, fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>9:41</span>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill={c}>
+          <rect x="0" y="3" width="3" height="9" rx="1" />
+          <rect x="4.5" y="2" width="3" height="10" rx="1" />
+          <rect x="9" y="0.5" width="3" height="11.5" rx="1" />
+          <rect x="13.5" y="0" width="3" height="12" rx="1" opacity=".3" />
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill={c}>
+          <path d="M8 2.5C10.2 2.5 12.2 3.4 13.6 4.9L15 3.4C13.2 1.3 10.8 0 8 0C5.2 0 2.8 1.3 1 3.4L2.4 4.9C3.8 3.4 5.8 2.5 8 2.5Z" />
+          <path d="M8 5.5C9.4 5.5 10.7 6.1 11.6 7L13 5.5C11.7 4.1 9.9 3.2 8 3.2C6.1 3.2 4.3 4.1 3 5.5L4.4 7C5.3 6.1 6.6 5.5 8 5.5Z" />
+          <circle cx="8" cy="10" r="2" />
+        </svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none">
+          <rect x=".5" y=".5" width="22" height="12" rx="2.5" stroke={c} />
+          <rect x="2" y="2" width="16" height="9" rx="1.5" fill={c} />
+          <path d="M24 4.5v4c.9-.5 1.5-1.2 1.5-2s-.6-1.5-1.5-2z" fill={c} />
+        </svg>
+      </div>
+    </div>);
+
+}
+
+/* ── Button ───────────────────────────────────────────────── */
+function Btn({ v = 'primary', children, onClick, full, style, disabled }) {
+  const [h, setH] = React.useState(false);
+  const [p, setP] = React.useState(false);
+  const vs = {
+    primary: { bg: h ? T.m800 : T.m600, col: '#fff', br: 'none' },
+    secondary: { bg: h ? T.m100 : T.m50, col: T.m800, br: `0.5px solid ${T.bm}` },
+    ghost: { bg: h ? T.m50 : 'transparent', col: T.m600, br: `0.5px solid ${T.bm}` },
+    ghostWh: { bg: h ? 'rgba(255,255,255,0.12)' : 'transparent', col: 'rgba(255,255,255,0.85)', br: '1px solid rgba(255,255,255,0.3)' }
+  };
+  const s = vs[v] || vs.primary;
+  return (
+    <button disabled={disabled} onClick={disabled ? undefined : onClick}
+    onMouseEnter={() => setH(true)} onMouseLeave={() => {setH(false);setP(false);}}
+    onMouseDown={() => setP(true)} onMouseUp={() => setP(false)}
+    style={{ fontFamily: ss, fontWeight: 500, fontSize: 15, padding: '13px 22px', borderRadius: 6,
+      border: s.br, background: s.bg, color: s.col, cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'background .15s,transform .1s', transform: p ? 'scale(0.98)' : 'scale(1)',
+      opacity: disabled ? .42 : 1, width: full ? '100%' : undefined, display: 'flex',
+      alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '-0.01em', ...style }}>
+      {children}
+    </button>);
+
+}
+
+/* ── Crown SVG (GOV.UK style) ─────────────────────────────── */
+function Crown({ sz = 28, col = '#fff' }) {
+  return (
+    <svg width={sz} height={Math.round(sz * .78)} viewBox="0 0 60 47" fill={col}>
+      <polygon points="4,38 4,18 14,28 20,8 28,22 30,3 32,22 40,8 46,28 56,18 56,38" />
+      <rect x="4" y="36" width="52" height="9" rx="1" />
+      <circle cx="20" cy="7" r="3.5" />
+      <circle cx="30" cy="2.5" r="3.5" />
+      <circle cx="40" cy="7" r="3.5" />
+    </svg>);
+
+}
+
+/* ── App root ─────────────────────────────────────────────── */
+const SCREENS = ['landing', 'wallet-select', 'govuk-loading', 'govuk-consent', 'pin-setup', 'success'];
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "headerColor": "#1a3314",
+  "cardRadius": 18
+}/*EDITMODE-END*/;
+
+function getContrastColor(hex) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return (r*299+g*587+b*114)/1000 > 128 ? T.m900 : '#fff';
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const init = () => {
+    const s = localStorage.getItem('ob_scr') || 'landing';
+    return s === 'govuk-loading' ? 'wallet-select' : s;
+  };
+  const [scr, setScr] = React.useState(init);
+  const dir = React.useRef(1);
+
+  function go(s, d = 1) {
+    dir.current = d;
+    setScr(s);
+    localStorage.setItem('ob_scr', s);
+  }
+
+  const isDark = scr === 'landing' || scr === 'wallet-select';
+  const isLanding = scr === 'landing';
+  const isGovUK = scr === 'govuk-loading' || scr === 'govuk-consent';
+  const anim = dir.current > 0 ? 'sIn .28s cubic-bezier(.4,0,.2,1) forwards' : 'sBk .25s cubic-bezier(.4,0,.2,1) forwards';
+  const headerTextColor = getContrastColor(t.headerColor);
+
+  const map = {
+    'landing': <LandingScreen go={go} />,
+    'wallet-select': <WalletSelectScreen go={go} back={() => go('landing', -1)} cardRadius={t.cardRadius} />,
+    'govuk-loading': <GovLoadScreen go={go} />,
+    'govuk-consent': <GovConsentScreen go={go} back={() => go('wallet-select', -1)} />,
+    'pin-setup': <PinScreen go={go} back={() => go('govuk-consent', -1)} />,
+    'success': <SuccessScreen headerColor={t.headerColor} headerTextColor={headerTextColor} />
+  };
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+      background: isDark ? T.m900 : isGovUK ? '#fff' : T.cr }}>
+      <StatusBar light={isDark} />
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        <div key={scr} style={{ position: 'absolute', inset: 0, animation: anim }}>
+          {map[scr]}
+        </div>
+      </div>
+    <TweaksPanel title="Tweaks">
+      <TweakSection label="Brand" />
+      <TweakColor label="Header" value={t.headerColor}
+        options={['#2db37a','#2d5422','#1a3314','#1a8a5a']}
+        onChange={v=>setTweak('headerColor',v)} />
+      <TweakSection label="Cards" />
+      <TweakSlider label="Corner radius" value={t.cardRadius} min={8} max={28} step={2} unit="px"
+        onChange={v=>setTweak('cardRadius',v)} />
+    </TweaksPanel>
+  </div>);
+
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 1 — Landing
+══════════════════════════════════════════════════════════ */
+function LandingScreen({ go }) {
+  return (
+    <div style={{ height: '100%', background: T.m900, display: 'flex', flexDirection: 'column' }}>
+      {/* Hero */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
+        <img src="assets/logo-v02.png" alt="My Bank"
+        style={{ height: 50, width: 'auto', objectFit: 'contain', filter: LFW, marginBottom: 36 }} />
+        <h1 style={{ fontFamily: sh, fontSize: 33, color: '#fff', fontWeight: 400,
+            lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 12 }}>
+          Welcome to<br />My Bank
+        </h1>
+        <p style={{ fontFamily: ss, fontSize: 15, color: T.m200, fontWeight: 300,
+          lineHeight: 1.72, marginBottom: 44, maxWidth: 268 }}>
+          Open your account in minutes — rooted in trust, built for today.
+        </p>
+        {/* Trust row */}
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {['FCA Authorised', 'FSCS Protected', '256-bit SSL'].map((t) =>
+          <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: T.e400 }} />
+              <span style={{ fontSize: 10, color: T.m200, fontFamily: ss, fontWeight: 400,
+              letterSpacing: '0.07em', textTransform: 'uppercase' }}>{t}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      {/* CTAs */}
+      <div style={{ padding: '0 24px 52px', display: 'flex', flexDirection: 'column', gap: 11 }}>
+        <Btn v="primary" full onClick={() => go('wallet-select', 1)}
+        style={{ padding: '15px 22px', fontSize: 16, background: T.m600 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2" />
+            <line x1="2" y1="10" x2="22" y2="10" />
+          </svg>
+          Continue with Digital Wallet
+        </Btn>
+        <Btn v="ghostWh" full style={{ fontSize: 15 }}>Apply with form</Btn>
+        <p style={{ textAlign: 'center', fontSize: 11, color: T.m400, fontFamily: ss,
+          fontWeight: 300, lineHeight: 1.6, marginTop: 2 }}>
+          By continuing you agree to our{' '}
+          <span style={{ color: T.m200, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer' }}>Terms</span>
+          {' '}&amp;{' '}
+          <span style={{ color: T.m200, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer' }}>Privacy Policy</span>
+        </p>
+      </div>
+    </div>);
+
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 2 — Wallet Selection
+══════════════════════════════════════════════════════════ */
+// Wallet icons as static elements
+const GOVUK_ICO =
+<div style={{ width: 46, height: 46, background: '#000', borderRadius: 7, display: 'flex',
+  flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, flexShrink: 0 }}>
+    <Crown sz={20} col="#fff" />
+    <span style={{ color: '#fff', fontWeight: 700, fontSize: 8.5, letterSpacing: '0.04em', fontFamily: 'Arial,sans-serif' }}>GOV.UK</span>
+  </div>;
+
+const EU_ICO =
+<div style={{ width: 46, height: 46, background: '#003399', borderRadius: 7, display: 'flex',
+  alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <svg width="30" height="30" viewBox="0 0 30 30">
+      {[...Array(12)].map((_, i) => {
+      const a = (i * 30 - 90) * Math.PI / 180;
+      return <circle key={i} cx={15 + 10 * Math.cos(a)} cy={15 + 10 * Math.sin(a)} r="1.9" fill="#FFDD00" />;
+    })}
+    </svg>
+  </div>;
+
+const PO_ICO =
+<div style={{ width: 46, height: 46, background: '#E30613', borderRadius: 7, display: 'flex',
+  alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <svg width="26" height="22" viewBox="0 0 26 22" fill="white">
+      <rect x="0" y="0" width="26" height="17" rx="2" />
+      <path d="M0 4L13 11.5L26 4" stroke="#E30613" strokeWidth="1.8" fill="none" />
+      <rect x="9" y="17" width="8" height="5" fill="white" />
+    </svg>
+  </div>;
+
+const LG_ICO =
+<div style={{ width: 46, height: 46, background: T.m600, borderRadius: 7, display: 'flex',
+  alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff"
+  strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="10" width="18" height="11" rx="1" />
+      <path d="M1 10.5L12 3l11 7.5" />
+      <rect x="9" y="14" width="6" height="7" />
+    </svg>
+  </div>;
+
+
+const WALLETS = [
+{ id: 'govuk', ico: GOVUK_ICO, name: 'GOV.UK Digital Wallet',
+  desc: 'Fastest sign-up using your verified UK government identity', rec: true },
+{ id: 'eu', ico: EU_ICO, name: 'EU Digital Identity Wallet',
+  desc: 'For EU citizens with a verified eIDAS identity credential' },
+{ id: 'po', ico: PO_ICO, name: 'Post Office Easy ID',
+  desc: 'Verify via your Post Office EasyID account or in-branch' },
+{ id: 'lg', ico: LG_ICO, name: 'Local Government Digital ID',
+  desc: "Connect via your council's digital identity service" }];
+
+
+function WalletSelectScreen({ go, back, cardRadius=18 }) {
+  const [frontIdx, setFrontIdx] = React.useState(0);
+
+  const CARD_H = 192;
+  const PEEK = 60;
+  const N = WALLETS.length;
+  const totalH = (N - 1) * PEEK + CARD_H;
+
+  const CFG = [
+  { bg: 'linear-gradient(145deg,#1c1c1e 0%,#000 100%)', sub: 'rgba(255,255,255,0.45)', label: 'Government Identity' },
+  { bg: 'linear-gradient(145deg,#003399 0%,#1a55b8 100%)', sub: 'rgba(255,255,255,0.5)', label: 'EU eIDAS' },
+  { bg: 'linear-gradient(145deg,#b71c1c 0%,#e53935 100%)', sub: 'rgba(255,255,255,0.5)', label: 'Post Office' },
+  { bg: `linear-gradient(145deg,${T.m800} 0%,${T.m600} 100%)`, sub: 'rgba(255,255,255,0.5)', label: 'Local Council' }];
+
+
+  const ICOS = [
+  <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 7, width: 32, height: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, flexShrink: 0 }}>
+      <Crown sz={15} col="#fff" />
+      <span style={{ color: '#fff', fontWeight: 700, fontSize: 5.5, letterSpacing: '0.05em', fontFamily: 'Arial,sans-serif' }}>GOV.UK</span>
+    </div>,
+  <div style={{ background: 'rgba(255,221,0,0.18)', borderRadius: 7, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        {[...Array(12)].map((_, j) => {const a = (j * 30 - 90) * Math.PI / 180;return <circle key={j} cx={10 + 7 * Math.cos(a)} cy={10 + 7 * Math.sin(a)} r="1.3" fill="#FFDD00" />;})}
+      </svg>
+    </div>,
+  <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 7, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <svg width="17" height="13" viewBox="0 0 26 22" fill="white">
+        <rect x="0" y="0" width="26" height="17" rx="2" />
+        <path d="M0 4L13 11.5L26 4" stroke="#e53935" strokeWidth="2" fill="none" />
+        <rect x="9" y="17" width="8" height="5" fill="white" />
+      </svg>
+    </div>,
+  <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 7, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="10" width="18" height="11" rx="1" />
+        <path d="M1 10.5L12 3l11 7.5" />
+        <rect x="9" y="14" width="6" height="7" />
+      </svg>
+    </div>];
+
+
+  function getSlot(idx) {
+    if (idx === frontIdx) return N - 1;
+    return Array.from({ length: N }, (_, i) => i).filter((i) => i !== frontIdx).indexOf(idx);
+  }
+
+  return (
+    <div style={{ height: '100%', background: T.m900, display: 'flex', flexDirection: 'column' }}>
+      {/* Nav */}
+      <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center',
+        padding:'10px 20px', flexShrink:0, minHeight:66 }}>
+        <button onClick={back} style={{ position:'absolute', left:20, background:'none', border:'none',
+          cursor:'pointer', color:'rgba(255,255,255,0.6)', padding:4, display:'flex', alignItems:'center' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <img src="assets/logo-v02.png" alt="My Bank"
+          style={{ height:50, width:'auto', objectFit:'contain', filter:LFW }} />
+      </div>
+
+      {/* Title */}
+      <div style={{ padding: '4px 24px 22px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 11 }}>
+          <span style={{ fontFamily: ss, fontSize: 10, fontWeight: 500, color: T.m400,
+            textTransform: 'uppercase', letterSpacing: '0.12em' }}>Step 1 of 3</span>
+          <div style={{ flex: 1, height: 1.5, background: 'rgba(255,255,255,0.07)', borderRadius: 2 }}>
+            <div style={{ width: '33%', height: '100%', background: T.m400, borderRadius: 2 }} />
+          </div>
+        </div>
+        <h1 style={{ fontFamily: sh, fontSize: 27, color: '#fff', fontWeight: 400,
+            lineHeight: 1.18, letterSpacing: '-0.02em', marginBottom: 6 }}>
+          Choose your wallet
+        </h1>
+        <p style={{ fontFamily: ss, fontSize: 13, color: T.m200, fontWeight: 300, lineHeight: 1.6 }}>
+          Tap a card to select — your credentials stay private
+        </p>
+      </div>
+
+      {/* Card stack */}
+      <div style={{ padding: '0 20px', flexShrink: 0 }}>
+        <div style={{ position: 'relative', height: totalH }}>
+          {WALLETS.map((w, i) => {
+            const slot = getSlot(i);
+            const cfg = CFG[i];
+            const front = slot === N - 1;
+            const top = slot * PEEK;
+
+            return (
+              <div key={w.id} onClick={() => {if (!front) setFrontIdx(i);}}
+              style={{
+                position: 'absolute', left: 0, right: 0,
+                top, height: CARD_H,
+                background: cfg.bg,
+                borderRadius: cardRadius,
+                overflow: 'hidden',
+                cursor: front ? 'default' : 'pointer',
+                transition: 'top .42s cubic-bezier(.4,0,.2,1)',
+                zIndex: slot + 1,
+                display: 'flex', flexDirection: 'column',
+                boxShadow: front ?
+                '0 20px 56px rgba(0,0,0,0.52),inset 0 0 0 0.5px rgba(255,255,255,0.1)' :
+                '0 4px 16px rgba(0,0,0,0.3)'
+              }}>
+
+                {/* Gloss sweep */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
+                  background: 'linear-gradient(130deg,rgba(255,255,255,0.07) 0%,transparent 52%)' }} />
+
+                {/* Peek strip — exactly PEEK px tall, always visible */}
+                <div style={{ height: PEEK, flexShrink: 0, display: 'flex', alignItems: 'center',
+                  padding: '0 18px', gap: 12, position: 'relative', zIndex: 2 }}>
+                  {ICOS[i]}
+                  <span style={{ fontFamily: ss, fontSize: 14, fontWeight: 500, color: '#fff',
+                    flex: 1, letterSpacing: '-0.01em' }}>{w.name}</span>
+                  {w.rec &&
+                  <span style={{ fontSize: 9, fontWeight: 600,
+                    background: front ? 'rgba(26,138,90,0.8)' : 'rgba(255,255,255,0.12)',
+                    color: front ? '#fff' : 'rgba(255,255,255,0.55)',
+                    padding: '3px 9px', borderRadius: 99, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', fontFamily: ss, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                      {front ? 'Recommended' : 'Rec'}
+                    </span>
+                  }
+                  {!w.rec && !front &&
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  }
+                </div>
+
+                {/* Full card body — fades in when front */}
+                <div style={{
+                  flex: 1, padding: '4px 18px 18px',
+                  display: 'flex', flexDirection: 'column',
+                  opacity: front ? 1 : 0,
+                  transition: 'opacity .28s .08s',
+                  position: 'relative', zIndex: 2
+                }}>
+                  <div style={{ fontFamily: sh, fontSize: 19, color: '#fff', fontWeight: 400,
+                      lineHeight: 1.25, marginBottom: 7, letterSpacing: '-0.01em' }}>
+                    {w.name}
+                  </div>
+                  <div style={{ fontFamily: ss, fontSize: 12, color: cfg.sub, fontWeight: 300,
+                    lineHeight: 1.62, flex: 1 }}>
+                    {w.desc}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                    <span style={{ fontFamily: ss, fontSize: 9, color: cfg.sub,
+                      textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 500 }}>
+                      {cfg.label}
+                    </span>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                        <path d="M1 5L4.5 8.5L11 1.5" stroke="white" strokeWidth="1.8"
+                        strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+              </div>);
+
+          })}
+        </div>
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      {/* CTA */}
+      <div style={{ padding: '0 20px 44px', flexShrink: 0 }}>
+        <Btn v="primary" full onClick={() => go('govuk-loading', 1)}
+        style={{ padding: 15, fontSize: 15, background: T.m600 }}>
+          Continue
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Btn>
+        <p style={{ textAlign: 'center', marginTop: 11, fontFamily: ss, fontSize: 11,
+          color: 'rgba(255,255,255,0.3)', fontWeight: 300 }}>
+          {WALLETS[frontIdx].name} selected
+        </p>
+      </div>
+
+    </div>);
+
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 3 — GOV.UK Wallet Loading
+══════════════════════════════════════════════════════════ */
+function GovLoadScreen({ go }) {
+  const [prog, setP] = React.useState(10);
+  React.useEffect(() => {
+    const tid = setTimeout(() => go('govuk-consent', 1), 2600);
+    const iid = setInterval(() => setP((p) => Math.min(p + 6, 88)), 180);
+    return () => {clearTimeout(tid);clearInterval(iid);};
+  }, []);
+  return (
+    <div style={{ height: '100%', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+      {/* GOV.UK header */}
+      <div style={{ background: '#000', padding: '11px 20px', display: 'flex',
+        alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <Crown sz={26} col="#fff" />
+        <span style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontWeight: 700,
+          fontSize: 18, color: '#fff', letterSpacing: '-0.01em' }}>GOV.UK</span>
+      </div>
+      {/* Progress bar */}
+      <div style={{ height: 4, background: '#f3f2f1', flexShrink: 0 }}>
+        <div style={{ height: '100%', background: '#1d70b8', width: `${prog}%`, transition: 'width .18s ease' }} />
+      </div>
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', padding: '32px' }}>
+        <div style={{ width: 76, height: 76, background: '#f3f2f1', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+          <Crown sz={44} col="#1d70b8" />
+        </div>
+        <h1 style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 21, fontWeight: 700,
+          color: '#0b0c0c', textAlign: 'center', marginBottom: 10, lineHeight: 1.25 }}>
+          GOV.UK Digital Wallet
+        </h1>
+        <p style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 16, color: '#505a5f',
+          textAlign: 'center', lineHeight: 1.55, marginBottom: 36, maxWidth: 260 }}>
+          Connecting securely to your digital identity…
+        </p>
+        <div style={{ width: 34, height: 34, border: '3px solid #e8e8e8', borderTop: '3px solid #1d70b8',
+          borderRadius: '50%', animation: 'spin .75s linear infinite' }} />
+        <div style={{ marginTop: 32, padding: '12px 16px', background: '#f3f2f1', borderRadius: 4,
+          fontSize: 14, color: '#505a5f', fontFamily: 'Arial,Helvetica,sans-serif',
+          textAlign: 'center', lineHeight: 1.55, maxWidth: 280 }}>
+          <strong style={{ color: '#0b0c0c' }}>🔒 Secure connection</strong><br />
+          We will never share your data without your explicit consent.
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 4 — GOV.UK Consent
+══════════════════════════════════════════════════════════ */
+function GovConsentScreen({ go, back }) {
+  const [checked, setChecked] = React.useState(false);
+  const DATA = [
+  { l: 'Full name', v: 'John David Ashworth' },
+  { l: 'Date of birth', v: '14 March 1988' },
+  { l: 'Home address', v: '42 Oak Lane, Bristol, BS8 1TH' },
+  { l: 'Verified identity', v: 'GOV.UK Identity — Level 2 verified' }];
+
+  return (
+    <div style={{ height: '100%', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+      {/* GOV.UK header */}
+      <div style={{ background: '#000', padding: '11px 20px', display: 'flex',
+        alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <Crown sz={26} col="#fff" />
+        <span style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontWeight: 700,
+          fontSize: 18, color: '#fff', letterSpacing: '-0.01em' }}>GOV.UK</span>
+      </div>
+      {/* Info bar */}
+      <div style={{ background: '#1d70b8', padding: '9px 20px', flexShrink: 0 }}>
+        <span style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 13, color: '#fff' }}>
+          Request from <strong>My Bank Ltd</strong> · FCA authorised
+        </span>
+      </div>
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 16px' }}>
+        <h1 style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 22, fontWeight: 700,
+          color: '#0b0c0c', lineHeight: 1.2, marginBottom: 14 }}>
+          Share your details with My Bank
+        </h1>
+        <p style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 15, color: '#0b0c0c',
+          lineHeight: 1.6, marginBottom: 18 }}>
+          My Bank is asking to access the following verified information from your GOV.UK Digital Wallet.
+        </p>
+        {/* Data list */}
+        <div style={{ borderLeft: '4px solid #b1b4b6', paddingLeft: 14, marginBottom: 20 }}>
+          <div style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 11, fontWeight: 700,
+            color: '#505a5f', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+            You are sharing:
+          </div>
+          {DATA.map((d, i) =>
+          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 13 }}>
+              <svg style={{ marginTop: 2, flexShrink: 0 }} width="18" height="18" viewBox="0 0 18 18">
+                <circle cx="9" cy="9" r="8.5" fill="#00703c" />
+                <path d="M5 9L8 12L13 6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div>
+                <div style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 14,
+                fontWeight: 700, color: '#0b0c0c', marginBottom: 1 }}>{d.l}</div>
+                <div style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 14, color: '#505a5f' }}>{d.v}</div>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Consent box */}
+        <div style={{ background: '#f3f2f1', padding: '13px 14px', borderRadius: 3, marginBottom: 18 }}>
+          <div style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 15, fontWeight: 700,
+            color: '#0b0c0c', marginBottom: 5 }}>
+            Are you happy to share this information with My Bank?
+          </div>
+          <div style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 14, color: '#505a5f', lineHeight: 1.55 }}>
+            My Bank will use this to verify your identity and open your account. You can withdraw consent at any time.
+          </div>
+        </div>
+        {/* Checkbox */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
+          <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)}
+          style={{ width: 22, height: 22, marginTop: 1, flexShrink: 0, accentColor: '#1d70b8', cursor: 'pointer' }} />
+          <span style={{ fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 14, color: '#0b0c0c', lineHeight: 1.55 }}>
+            I confirm I have read and understood how my data will be used.
+          </span>
+        </label>
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button onClick={() => checked && go('pin-setup', 1)} style={{
+            background: checked ? '#00703c' : '#b1b4b6', color: '#fff', border: 'none',
+            borderRadius: 3, padding: '13px 20px',
+            fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 17, fontWeight: 700,
+            cursor: checked ? 'pointer' : 'not-allowed', letterSpacing: '-0.01em',
+            boxShadow: checked ? '0 2px 0 #003a1f' : '0 2px 0 #6f7376',
+            transition: 'background .15s'
+          }}>
+            Yes, share and continue
+          </button>
+          <button onClick={back} style={{
+            background: 'transparent', color: '#1d70b8', border: 'none', borderRadius: 3,
+            padding: '13px 20px', fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 16,
+            fontWeight: 400, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3
+          }}>
+            Cancel
+          </button>
+        </div>
+        {/* Legal footer */}
+        <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid #b1b4b6',
+          fontFamily: 'Arial,Helvetica,sans-serif', fontSize: 12, color: '#505a5f', lineHeight: 1.6 }}>
+          My Bank is authorised and regulated by the <strong>Financial Conduct Authority</strong> (FRN: 123456).
+          Your data is protected under UK GDPR and the Data Protection Act 2018.
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 5 — PIN Setup
+══════════════════════════════════════════════════════════ */
+const KEY_LETTERS = { 2: 'ABC', 3: 'DEF', 4: 'GHI', 5: 'JKL', 6: 'MNO', 7: 'PQRS', 8: 'TUV', 9: 'WXYZ' };
+
+function PinScreen({ go, back }) {
+  const [pin,   setPin]   = React.useState([]);
+  const [err,   setErr]   = React.useState('');
+  const [auth,  setAuth]  = React.useState(false);
+
+  function tap(k) {
+    if (pin.length >= 6 || auth) return;
+    const next = [...pin, k];
+    setPin(next); setErr('');
+    if (next.length === 6) {
+      setAuth(true);
+      setTimeout(() => go('success', 1), 750);
+    }
+  }
+  function del() { setPin((p) => p.slice(0, -1)); setErr(''); }
+
+  const KEYS = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [null, 0, '⌫']];
+
+  return (
+    <div style={{ height: '100%', background: T.cr, display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center',
+        padding:'10px 20px', borderBottom:`0.5px solid ${T.bl}`, flexShrink:0, minHeight:66 }}>
+        <button onClick={back} style={{ position:'absolute', left:20, background:'none', border:'none',
+          cursor:'pointer', color:T.m600, padding:4, display:'flex', alignItems:'center' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <img src="assets/logo-v02.png" alt="My Bank"
+          style={{ height:50, width:'auto', objectFit:'contain', filter:LF }} />
+      </div>
+
+      {/* Body */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+        padding:'24px 24px 28px' }}>
+
+        {/* Step + progress */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18,
+          width:'100%', maxWidth:280 }}>
+          <span style={{ fontFamily:ss, fontSize:11, fontWeight:500, color:T.tm,
+            textTransform:'uppercase', letterSpacing:'0.10em', whiteSpace:'nowrap' }}>Step 2 of 3</span>
+          <div style={{ flex:1, height:2, background:T.bl, borderRadius:2 }}>
+            <div style={{ width:'66%', height:'100%', background:T.m400, borderRadius:2 }} />
+          </div>
+        </div>
+
+        {/* GOV.UK badge */}
+        <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:18,
+          background:'#f3f2f1', borderRadius:4, padding:'7px 14px' }}>
+          <Crown sz={16} col="#000" />
+          <span style={{ fontFamily:'Arial,sans-serif', fontWeight:700, fontSize:12,
+            color:'#0b0c0c', letterSpacing:'0.01em' }}>GOV.UK</span>
+          <span style={{ fontFamily:ss, fontSize:12, color:'#505a5f', fontWeight:300 }}>
+            · Identity verification
+          </span>
+        </div>
+
+        <h1 style={{ fontFamily:sh, fontSize:24, color:T.m800, fontWeight:400,
+          marginBottom:8, textAlign:'center', lineHeight:1.2 }}>
+          Enter your GOV.UK PIN
+        </h1>
+        <p style={{ fontFamily:ss, fontSize:14, color:T.ts, fontWeight:300,
+          lineHeight:1.6, textAlign:'center', marginBottom:28, maxWidth:264 }}>
+          Confirm your identity to authorise sharing your details with My Bank
+        </p>
+
+        {/* PIN dots */}
+        <div style={{ display:'flex', gap:14, marginBottom:22 }}>
+          {[0, 1, 2, 3, 4, 5].map((i) =>
+          <div key={i} style={{
+            width:14, height:14, borderRadius:'50%',
+            background: auth ? T.e600 : i < pin.length ? T.m600 : 'transparent',
+            border:`2px solid ${auth ? T.e600 : i < pin.length ? T.m600 : T.bm}`,
+            transition:'all .15s',
+            animation: auth && i < 6 ? `popIn .2s ${i * 0.04}s both` : undefined
+          }} />
+          )}
+        </div>
+
+        {err &&
+          <div style={{ background:'#fff2f2', border:'0.5px solid rgba(192,57,43,0.3)',
+            borderRadius:6, padding:'8px 14px', fontSize:13, color:'#c0392b',
+            fontFamily:ss, marginBottom:14, textAlign:'center' }}>
+            {err}
+          </div>
+        }
+
+        {/* Keypad */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:11,
+          width:'100%', maxWidth:276, marginTop:'auto' }}>
+          {KEYS.flat().map((k, i) => {
+            if (k === null) return <div key={i} />;
+            return (
+              <button key={i} onClick={() => k === '⌫' ? del() : tap(k)}
+                style={{ height:62, background:T.wh, border:`0.5px solid ${T.bl}`, borderRadius:10,
+                  fontFamily: k === '⌫' ? ss : sr, fontSize: k === '⌫' ? 21 : 26,
+                  color: k === '⌫' ? T.tm : T.m800,
+                  cursor:'pointer', transition:'background .1s,transform .08s', display:'flex',
+                  flexDirection:'column', alignItems:'center', justifyContent:'center',
+                  gap:2, fontWeight:400, WebkitTapHighlightColor:'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = T.m50}
+                onMouseLeave={(e) => e.currentTarget.style.background = T.wh}
+                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.91)'}
+                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                {k === '⌫' ? '⌫' :
+                  <>
+                    <span>{k}</span>
+                    <span style={{ fontSize:8, color:T.tm, fontFamily:ss, letterSpacing:'0.1em', fontWeight:300 }}>
+                      {KEY_LETTERS[k] || ''}
+                    </span>
+                  </>
+                }
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Forgot PIN */}
+        <div style={{ marginTop:20 }}>
+          <span style={{ fontSize:12, color:T.tm, fontFamily:ss, fontWeight:400,
+            cursor:'pointer', textDecoration:'underline', textUnderlineOffset:2 }}>
+            Forgotten your GOV.UK PIN?
+          </span>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREEN 6 — Success + Account Pick + Mini Dashboard
+══════════════════════════════════════════════════════════ */
+
+const SUB_ACCOUNTS = {
+  everyday: {
+    title: 'Current Accounts',
+    subtitle: 'Day-to-day banking built around you',
+    items: [
+      { id:'standard', name:'My Bank Current',  badge:'Most popular', badgeCol:T.m600,
+        desc:'A no-nonsense account for daily life',
+        features:['No monthly fee','Instant payments & notifications','Apple Pay & Google Pay'] },
+      { id:'premium',  name:'My Bank Premium',  badge:'Best value',   badgeCol:T.e600,
+        desc:'Premium banking with travel perks',
+        features:['£9.99 / month','Worldwide travel insurance','No foreign transaction fees','Airport lounge access'] },
+      { id:'student',  name:'My Bank Student',  badge:'Students',     badgeCol:'#7855c8',
+        desc:'Made for full-time students',
+        features:['0% overdraft up to £1,500','No monthly fee','Exclusive student offers'] },
+      { id:'flex',     name:'My Bank Flex',      badge:null,           badgeCol:null,
+        desc:'Pay only for what you use',
+        features:['No fees, no minimums','Instant top-ups','Withdraw anytime'] },
+    ]
+  },
+  save: {
+    title: 'Savings Accounts',
+    subtitle: 'Competitive rates that grow with you',
+    items: [
+      { id:'easy',  name:'Easy Access Saver',  badge:'Flexible',   badgeCol:T.m600,
+        desc:'Save and withdraw whenever you like',
+        features:['Withdraw anytime','No notice period','FSCS protected to £85,000'],
+        rate:'4.20% AER' },
+      { id:'fixed', name:'1-Year Fixed Bond',  badge:'Best rate',  badgeCol:T.e600,
+        desc:'Lock in a higher rate for 12 months',
+        features:['Fixed for 12 months','No withdrawals during term','FSCS protected'],
+        rate:'5.10% AER' },
+      { id:'isa',   name:'Cash ISA',           badge:'Tax-free',   badgeCol:'#b85c00',
+        desc:'Earn interest free of income tax',
+        features:['Tax-free interest','Up to £20,000 / year','Flexible ISA rules'],
+        rate:'4.50% AER' },
+      { id:'lisa',  name:'Lifetime ISA',       badge:'25% bonus',  badgeCol:'#1a5fa8',
+        desc:'Save for your first home or retirement',
+        features:['25% government bonus','Max £4,000 / year','First home or retirement'],
+        rate:'4.00% AER' },
+    ]
+  },
+  invest: {
+    title: 'Investment Accounts',
+    subtitle: 'Build long-term wealth, invest with purpose',
+    items: [
+      { id:'isa',     name:'Stocks & Shares ISA',  badge:'Tax-free',  badgeCol:'#b85c00',
+        desc:'Invest up to £20,000 / year tax-free',
+        features:['Tax-free growth & dividends','Wide fund and stock choice','Annual ISA allowance'] },
+      { id:'ethical', name:'Ethical Growth Fund',  badge:'ESG',        badgeCol:T.e600,
+        desc:'Invest in companies making a positive impact',
+        features:['Positive impact screening','Medium risk','Quarterly rebalancing'],
+        rate:'+12.4% 3yr' },
+      { id:'index',   name:'Global Index Tracker', badge:'Low cost',   badgeCol:T.m600,
+        desc:'Broad market exposure at minimal cost',
+        features:['0.15% annual charge','2,000+ global companies','Auto-rebalancing'],
+        rate:'+18.7% 3yr' },
+      { id:'managed', name:'Managed Portfolio',    badge:'Premium',    badgeCol:'#7855c8',
+        desc:'Expert-managed, high-conviction investing',
+        features:['Professionally managed','Monthly reports','Dedicated adviser'],
+        rate:'+21.2% 3yr' },
+    ]
+  }
+};
+
+function SuccessScreen({ headerColor='#2d5422', headerTextColor='#fff' }) {
+  const [page,     setPage]     = React.useState('picker');
+  const [selCat,   setSelCat]   = React.useState(null);
+  const [selSub,   setSelSub]   = React.useState(null);
+  const [navDir,   setNavDir]   = React.useState(1);
+  const [transKey, setTransKey] = React.useState(0);
+
+  function navTo(newPage, newCat, newSub, dir=1) {
+    setNavDir(dir);
+    setSelCat(newCat !== undefined ? newCat : selCat);
+    setSelSub(newSub !== undefined ? newSub : selSub);
+    setPage(newPage);
+    setTransKey(k => k + 1);
+  }
+
+  const innerAnim = navDir > 0
+    ? 'sIn .28s cubic-bezier(.4,0,.2,1) forwards'
+    : 'sBk .25s cubic-bezier(.4,0,.2,1) forwards';
+
+  const ACCS = [
+    { id:'everyday', name:'Everyday', desc:'Current account for daily spending', col:T.m600,
+      icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+      </svg> },
+    { id:'save', name:'Save', desc:'Grow your money with competitive rates', col:T.e600,
+      icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/>
+      </svg> },
+    { id:'invest', name:'Invest', desc:'Stocks, ISAs, and ethical funds', col:T.m800,
+      icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg> },
+  ];
+
+  const catData = selCat ? SUB_ACCOUNTS[selCat] : null;
+  const catObj  = selCat ? ACCS.find(a => a.id === selCat) : null;
+  const subData = (selCat && selSub) ? (SUB_ACCOUNTS[selCat]?.items||[]).find(i=>i.id===selSub) : null;
+
+  /* ── Picker ── */
+  function renderPicker() {
+    return (
+      <div style={{height:'100%',background:T.cr,display:'flex',flexDirection:'column'}}>
+        <div style={{background:headerColor,padding:'20px 24px 16px',flexShrink:0}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:12}}>
+            <img src="assets/logo-v02.png" alt="My Bank"
+              style={{height:50,width:'auto',filter:headerTextColor==='#fff'?LFW:LF}}/>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <h1 style={{fontFamily:sh,fontSize:26,color:headerTextColor,fontWeight:400,
+              marginBottom:4,lineHeight:1.2}}>Welcome, John</h1>
+            <p style={{fontFamily:ss,fontSize:14,fontWeight:300,lineHeight:1.65,
+              color:headerTextColor==='#fff'?'rgba(255,255,255,0.7)':'rgba(0,0,0,0.55)'}}>
+              Your identity has been verified — your account is ready.
+            </p>
+          </div>
+          <div style={{display:'flex',justifyContent:'center',marginTop:12}}>
+            <div style={{display:'flex',alignItems:'center',gap:7,
+              background:'rgba(26,138,90,0.22)',border:'0.5px solid rgba(45,179,122,0.38)',
+              borderRadius:99,padding:'5px 14px'}}>
+              <svg width="13" height="13" viewBox="0 0 13 13">
+                <circle cx="6.5" cy="6.5" r="6" fill={T.e400}/>
+                <path d="M3.5 6.5L5.5 8.5L9.5 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span style={{fontSize:11.5,color:T.e200,fontFamily:ss,fontWeight:500,letterSpacing:'0.04em'}}>Identity Verified</span>
+            </div>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:'auto',padding:'18px 20px 12px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:7}}>
+            <span style={{fontFamily:ss,fontSize:11,fontWeight:500,color:T.tm,
+              textTransform:'uppercase',letterSpacing:'0.10em',whiteSpace:'nowrap'}}>Step 3 of 3</span>
+            <div style={{flex:1,height:2,background:T.bl,borderRadius:2}}>
+              <div style={{width:'100%',height:'100%',background:T.m400,borderRadius:2}}/>
+            </div>
+          </div>
+          <h2 style={{fontFamily:sh,fontSize:22,color:T.m800,fontWeight:400,marginBottom:6,lineHeight:1.2}}>
+            How can we help you prosper?
+          </h2>
+          <p style={{fontFamily:ss,fontSize:14,color:T.ts,fontWeight:300,lineHeight:1.65,marginBottom:16}}>
+            Choose the account type that fits your life.
+          </p>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            {ACCS.map(acc => (
+              <button key={acc.id} onClick={()=>navTo('detail',acc.id,null,1)}
+                style={{background:T.wh,border:`0.5px solid ${T.bl}`,borderRadius:8,padding:'15px 16px',
+                  cursor:'pointer',textAlign:'left',display:'flex',gap:14,alignItems:'center',
+                  transition:'all .15s',fontFamily:ss}}
+                onMouseEnter={e=>{e.currentTarget.style.background=T.m50;e.currentTarget.style.borderColor=acc.col;}}
+                onMouseLeave={e=>{e.currentTarget.style.background=T.wh;e.currentTarget.style.borderColor=T.bl;}}>
+                <div style={{width:46,height:46,borderRadius:8,background:T.m50,color:acc.col,
+                  display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  {acc.icon}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:sh,fontSize:16,color:T.m800,marginBottom:2}}>{acc.name}</div>
+                  <div style={{fontFamily:ss,fontSize:12,color:T.tm,fontWeight:300}}>{acc.desc}</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tm}
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Detail ── */
+  function renderDetail() {
+    if (!catData || !catObj) return null;
+    return (
+      <div style={{height:'100%',background:T.cr,display:'flex',flexDirection:'column'}}>
+        <div style={{background:headerColor,flexShrink:0}}>
+          <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',
+            padding:'10px 20px',minHeight:66}}>
+            <button onClick={()=>navTo('picker',null,null,-1)}
+              style={{position:'absolute',left:20,background:'none',border:'none',cursor:'pointer',
+                color:headerTextColor,padding:4,display:'flex',alignItems:'center',opacity:0.85}}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <img src="assets/logo-v02.png" alt="My Bank"
+              style={{height:50,width:'auto',filter:headerTextColor==='#fff'?LFW:LF}}/>
+          </div>
+          <div style={{padding:'0 24px 16px',textAlign:'center'}}>
+            <h1 style={{fontFamily:sh,fontSize:21,color:headerTextColor,fontWeight:400,marginBottom:4,lineHeight:1.2}}>
+              {catData.title}
+            </h1>
+            <p style={{fontFamily:ss,fontSize:13,fontWeight:300,lineHeight:1.5,
+              color:headerTextColor==='#fff'?'rgba(255,255,255,0.65)':'rgba(0,0,0,0.5)'}}>
+              {catData.subtitle}
+            </p>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:'auto',padding:'14px 16px 24px'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:11}}>
+            {catData.items.map(item => (
+              <button key={item.id} onClick={()=>navTo('dashboard',selCat,item.id,1)}
+                style={{background:T.wh,border:`0.5px solid ${T.bl}`,borderRadius:10,padding:'16px',
+                  cursor:'pointer',textAlign:'left',display:'flex',flexDirection:'column',gap:9,
+                  transition:'all .15s',fontFamily:ss}}
+                onMouseEnter={e=>{e.currentTarget.style.background=T.m50;e.currentTarget.style.borderColor=catObj.col;}}
+                onMouseLeave={e=>{e.currentTarget.style.background=T.wh;e.currentTarget.style.borderColor=T.bl;}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <span style={{fontFamily:sh,fontSize:16,color:T.m800,fontWeight:400,flex:1}}>{item.name}</span>
+                  {item.badge && (
+                    <span style={{fontSize:9,fontWeight:600,background:item.badgeCol,color:'#fff',
+                      padding:'3px 8px',borderRadius:99,letterSpacing:'0.05em',textTransform:'uppercase',
+                      fontFamily:ss,flexShrink:0}}>{item.badge}</span>
+                  )}
+                  {item.rate && (
+                    <span style={{fontFamily:ss,fontSize:13,fontWeight:600,color:T.e600,flexShrink:0}}>
+                      {item.rate}
+                    </span>
+                  )}
+                </div>
+                <div style={{fontFamily:ss,fontSize:12,color:T.ts,fontWeight:300,lineHeight:1.5}}>{item.desc}</div>
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  {item.features.map((f,fi)=>(
+                    <div key={fi} style={{display:'flex',alignItems:'center',gap:7}}>
+                      <div style={{width:4,height:4,borderRadius:'50%',background:catObj.col,flexShrink:0}}/>
+                      <span style={{fontFamily:ss,fontSize:12,color:T.ts,fontWeight:300}}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                  <span style={{fontFamily:ss,fontSize:12,color:catObj.col,fontWeight:500,
+                    display:'flex',alignItems:'center',gap:4}}>
+                    Open account
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Dashboard ── */
+  function renderDashboard() {
+    return (
+      <div style={{height:'100%',background:T.cr,display:'flex',flexDirection:'column'}}>
+        <div style={{position:'relative',display:'flex',alignItems:'center',justifyContent:'center',
+          padding:'10px 20px',borderBottom:`0.5px solid ${T.bl}`,flexShrink:0,minHeight:66}}>
+          <img src="assets/logo-v02.png" alt="My Bank" style={{height:50,width:'auto',filter:LF}}/>
+          <div style={{position:'absolute',right:20,display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:12,color:T.tm,fontFamily:ss,fontWeight:300}}>Good morning</span>
+            <div style={{width:32,height:32,borderRadius:'50%',background:T.m600,display:'flex',
+              alignItems:'center',justifyContent:'center',color:'#fff',fontSize:13,fontWeight:500,fontFamily:ss}}>J</div>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:'auto'}}>
+          <div style={{margin:'14px 16px 0',background:T.m800,borderRadius:8,padding:'20px',position:'relative',overflow:'hidden'}}>
+            <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg,rgba(255,255,255,0.04) 0%,transparent 60%)',pointerEvents:'none'}}/>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{fontSize:10,textTransform:'uppercase',letterSpacing:'0.10em',color:T.m200,fontFamily:ss}}>Current Balance</div>
+              <img src="assets/logo-v02.png" alt="" style={{height:22,width:'auto',filter:LFW,opacity:.5}}/>
+            </div>
+            <div style={{fontFamily:sr,fontSize:36,color:'#fff',fontWeight:400,lineHeight:1,marginBottom:10}}>
+              £0<span style={{fontSize:20,color:T.m200}}>.00</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <div style={{width:32,height:32,borderRadius:6,background:'rgba(255,255,255,0.08)',
+                display:'flex',alignItems:'center',justifyContent:'center',color:T.m200}}>{catObj?.icon}</div>
+              <div style={{fontSize:12,color:T.m200,fontFamily:ss,fontWeight:300}}>
+                {subData?.name || (catObj?.name + ' Account')} · ••••
+              </div>
+            </div>
+          </div>
+          <div style={{margin:'12px 16px 0',background:T.e50,border:`0.5px solid ${T.e100}`,borderRadius:8,
+            padding:'14px',display:'flex',gap:12,alignItems:'flex-start'}}>
+            <div style={{fontSize:22,flexShrink:0}}>🌱</div>
+            <div>
+              <div style={{fontFamily:sr,fontSize:15,color:T.e800,marginBottom:3,fontStyle:'italic'}}>Growing with intention</div>
+              <div style={{fontFamily:ss,fontSize:13,color:T.ts,fontWeight:300,lineHeight:1.55}}>
+                Your account is open. Add funds to begin your financial journey.
+              </div>
+            </div>
+          </div>
+          <div style={{padding:'12px 16px 0',display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+            {['Add money','Send','Pay','More'].map(a=>
+              <div key={a} style={{background:T.wh,border:`0.5px solid ${T.bl}`,borderRadius:6,
+                padding:'11px 6px',textAlign:'center',cursor:'pointer',transition:'background .12s'}}
+                onMouseEnter={e=>e.currentTarget.style.background=T.m50}
+                onMouseLeave={e=>e.currentTarget.style.background=T.wh}>
+                <div style={{fontFamily:sr,fontSize:12,color:T.m800}}>{a}</div>
+              </div>
+            )}
+          </div>
+          <div style={{padding:'20px 16px 0'}}>
+            <div style={{fontFamily:ss,fontSize:11,fontWeight:500,color:T.tm,textTransform:'uppercase',
+              letterSpacing:'0.10em',marginBottom:12}}>Recent activity</div>
+            <div style={{background:T.wh,border:`0.5px solid ${T.bl}`,borderRadius:8,padding:'24px 20px',textAlign:'center'}}>
+              <div style={{fontFamily:sr,fontSize:15,color:T.tm,fontStyle:'italic',marginBottom:4}}>Nothing yet</div>
+              <div style={{fontFamily:ss,fontSize:12,color:T.tm,fontWeight:300}}>Transactions will appear here</div>
+            </div>
+          </div>
+          <div style={{height:80}}/>
+        </div>
+        <div style={{display:'flex',background:T.wh,borderTop:`0.5px solid ${T.bl}`,flexShrink:0}}>
+          {[{ic:'⌂',l:'Home'},{ic:'↑',l:'Send'},{ic:'◎',l:'Savings'},{ic:'≡',l:'History'},{ic:'○',l:'Profile'}].map((item,idx)=>
+            <div key={idx} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',
+              padding:'10px 4px 14px',gap:3,cursor:'pointer',color:idx===0?T.m600:T.tm}}>
+              <span style={{fontSize:16}}>{item.ic}</span>
+              <span style={{fontSize:9.5,textTransform:'uppercase',letterSpacing:'0.04em',
+                fontFamily:ss,fontWeight:idx===0?500:400}}>{item.l}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const content = page==='dashboard' ? renderDashboard()
+    : page==='detail' ? renderDetail()
+    : renderPicker();
+
+  return (
+    <div style={{height:'100%',position:'relative',overflow:'hidden'}}>
+      <div key={transKey} style={{
+        position:'absolute',inset:0,
+        animation: transKey===0 ? undefined
+          : page==='dashboard' ? 'fIn .32s ease forwards'
+          : innerAnim
+      }}>
+        {content}
+      </div>
+    </div>
+  );
+}
+
+/* ── Render ───────────────────────────────────────────────── */
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
